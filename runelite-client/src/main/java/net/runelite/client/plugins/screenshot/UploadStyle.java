@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Tomas Slusny <slusnucky@gmail.com>
+ * Copyright (c) 2019, Alexsuperfly <https://github.com/Alexsuperfly>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,42 +22,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.chat;
 
-import java.awt.Color;
-import net.runelite.client.util.ColorUtil;
-import net.runelite.api.util.Text;
+package net.runelite.client.plugins.screenshot;
 
-public class ChatMessageBuilder
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+public enum UploadStyle
 {
-	private final StringBuilder builder = new StringBuilder();
+	NEITHER("Neither"),
+	IMGUR("Imgur"),
+	CLIPBOARD("Clipboard");
 
-	public ChatMessageBuilder append(final ChatColorType type)
-	{
-		builder.append("<col").append(type.name()).append(">");
-		return this;
-	}
+	private final String name;
 
-	public ChatMessageBuilder append(final Color color, final String message)
+	@Override
+	public String toString()
 	{
-		builder.append(ColorUtil.wrapWithColorTag(message, color));
-		return this;
-	}
-
-	public ChatMessageBuilder append(final String message)
-	{
-		builder.append(Text.escapeJagex(message));
-		return this;
-	}
-
-	public ChatMessageBuilder img(int imageId)
-	{
-		builder.append("<img=").append(imageId).append('>');
-		return this;
-	}
-
-	public String build()
-	{
-		return builder.toString();
+		return name;
 	}
 }
