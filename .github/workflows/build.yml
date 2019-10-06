@@ -12,7 +12,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: seferov/pr-lint-action@master
         with:
-          title-regex: '^\w+: \w+'
+          title-regex: '^([\w-]+): \w+'
 
   build:
     runs-on: windows-latest
@@ -68,29 +68,5 @@ jobs:
       - name: Approve pull request
         if: github.event_name == 'pull_request' && github.actor == 'OpenOSRS'
         uses: hmarr/auto-approve-action@master
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-  merge:
-    name: Merge
-    needs: approve
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Merge pull request
-        if: github.event_name == 'pull_request' && github.actor == 'OpenOSRS'
-        uses: managedkaos/merge-pull-request@master
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-  cleanup:
-    name: Cleanup
-    needs: merge
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Remove merged branch
-        if: github.event_name == 'pull_request' && github.actor == 'OpenOSRS'
-        uses: jessfraz/branch-cleanup-action@master
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
