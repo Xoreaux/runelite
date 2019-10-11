@@ -71,7 +71,7 @@ ext {
     mongodbDriverSync = '3.11.0'
     mysqlConnectorJava = '8.0.17'
     netty = '4.1.42.Final'
-    okhttp3 = '4.2.1'
+    okhttp3 = '4.2.2'
     orangeExtensions = '1.0'
     petitparser = '2.2.0'
     plexus = '3.2.1'
@@ -132,7 +132,7 @@ subprojects {
         maven { url "http://repo1.maven.org/maven2" }
         maven { url "http://repo.runelite.net" }
         maven { url "http://repo.maven.apache.org/maven2" }
-        maven { url "https://raw.githubusercontent.com/runelite-extended/maven-repo/master" }
+        maven { url "https://raw.githubusercontent.com/open-osrs/hosting/master" }
 
         if (System.getenv("NEXUS-URL") != null) {
             maven { url System.getenv("NEXUS-URL") }
