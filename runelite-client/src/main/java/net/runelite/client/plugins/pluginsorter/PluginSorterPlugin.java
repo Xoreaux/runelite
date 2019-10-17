@@ -24,11 +24,10 @@
  */
 package net.runelite.client.plugins.pluginsorter;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Provides;
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Comparator;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.events.ConfigChanged;
@@ -50,21 +49,35 @@ import net.runelite.client.plugins.config.PluginListItem;
 @Singleton
 public class PluginSorterPlugin extends Plugin
 {
-	//Cache the hidden plugins
-	private static final List<PluginListItem> removedPlugins = new ArrayList<>();
-
 	@Inject
 	private PluginSorterConfig config;
 
 	@Inject
 	private EventBus eventBus;
 
-	private boolean hidePlugins;
+	private PluginSorterConfig.SortStyle pluginSortMode;
 	private Color externalColor;
 	private Color pvmColor;
 	private Color pvpColor;
 	private Color skillingColor;
 	private Color utilityColor;
+
+	private final ImmutableList<PluginType> definedOrder = ImmutableList.of(PluginType.IMPORTANT, PluginType.EXTERNAL, PluginType.PVM, PluginType.SKILLING, PluginType.PVP, PluginType.UTILITY, PluginType.GENERAL_USE, PluginType.PLUGIN_ORGANIZER);
+	private final Comparator<PluginListItem> pluginTypeComparator = Comparator.comparing(plugin ->
+	{
+		PluginType type = PluginType.GENERAL_USE;
+		Plugin sortPlugin = plugin.getPlugin();
+		if (sortPlugin != null)
+		{
+			type = sortPlugin.getClass().getAnnotation(PluginDescriptor.class).type();
+		}
+		else if (plugin.configDescriptor.getGroup().value().equals("openosrs") || plugin.configDescriptor.getGroup().value().equals("runelite"))
+		{
+			type = PluginType.IMPORTANT;
+		}
+
+		return definedOrder.indexOf(type);
+	});
 
 	@Provides
 	PluginSorterConfig provideConfig(ConfigManager configManager)
@@ -78,7 +91,7 @@ public class PluginSorterPlugin extends Plugin
 		updateConfig();
 		addSubscriptions();
 
-		updateColors();
+		updatePlugins();
 	}
 
 	@Override
@@ -100,16 +113,7 @@ public class PluginSorterPlugin extends Plugin
 
 	private void validatePlugins()
 	{
-		if (this.hidePlugins)
-		{
-			hidePlugins();
-		}
-		else
-		{
-			showPlugins();
-		}
-
-		updateColors();
+		updatePlugins();
 	}
 
 	private void onConfigChanged(ConfigChanged configChanged)
@@ -120,15 +124,18 @@ public class PluginSorterPlugin extends Plugin
 		}
 
 		updateConfig();
-
-		if (configChanged.getKey().equals("hidePlugins"))
-		{
-			validatePlugins();
-		}
+		updatePlugins();
 	}
 
-	private void updateColors()
+	private void updatePlugins()
 	{
+		boolean hidePlugins = config.hidePlugins();
+		boolean hidePvmPlugins = config.hidePvmPlugins();
+		boolean hidePvpPlugins = config.hidePvpPlugins();
+		boolean hideSkillingPlugins = config.hideSkillingPlugins();
+		boolean hideUtilityPlugins = config.hideUtilityPlugins();
+		boolean hideExternalPlugins = config.hideExternalPlugins();
+
 		for (PluginListItem pli : ConfigPanel.pluginList)
 		{
 			if (pli.getPlugin() != null)
@@ -137,18 +144,23 @@ public class PluginSorterPlugin extends Plugin
 				{
 					case EXTERNAL:
 						pli.nameLabel.setForeground(this.externalColor);
+						pli.setHidden(hidePlugins || hideExternalPlugins);
 						break;
 					case PVM:
 						pli.nameLabel.setForeground(this.pvmColor);
+						pli.setHidden(hidePlugins || hidePvmPlugins);
 						break;
 					case PVP:
 						pli.nameLabel.setForeground(this.pvpColor);
+						pli.setHidden(hidePlugins || hidePvpPlugins);
 						break;
 					case SKILLING:
 						pli.nameLabel.setForeground(this.skillingColor);
+						pli.setHidden(hidePlugins || hideSkillingPlugins);
 						break;
 					case UTILITY:
 						pli.nameLabel.setForeground(this.utilityColor);
+						pli.setHidden(hidePlugins || hideUtilityPlugins);
 						break;
 					default:
 						pli.nameLabel.setForeground(Color.WHITE);
@@ -156,51 +168,20 @@ public class PluginSorterPlugin extends Plugin
 				}
 			}
 		}
-	}
 
-	private void hidePlugins()
-	{
-		Iterator<PluginListItem> iter = ConfigPanel.pluginList.iterator();
-		while (iter.hasNext())
+		if (this.pluginSortMode == PluginSorterConfig.SortStyle.CATEGORY)
 		{
-			PluginListItem pli = iter.next();
-			if (pli.getPlugin() != null)
-			{
-				switch (pli.getPlugin().getClass().getAnnotation(PluginDescriptor.class).type())
-				{
-					case PVM:
-					case PVP:
-					case SKILLING:
-					case UTILITY:
-					case EXTERNAL:
-						iter.remove();
-						removedPlugins.add(pli);
-						break;
-					case GENERAL_USE:
-					default:
-						break;
-				}
-			}
-		}
-	}
-
-	private void showPlugins()
-	{
-		List<PluginListItem> tempList = new ArrayList<>(ConfigPanel.pluginList);
-		if (tempList.size() > 0)
-		{
-			tempList.addAll(2, removedPlugins);
+			ConfigPanel.pluginList.sort(pluginTypeComparator.thenComparing(PluginListItem::getName));
 		}
 		else
 		{
-			tempList.addAll(removedPlugins);
+			ConfigPanel.pluginList.sort(Comparator.comparing(PluginListItem::getName));
 		}
-		ConfigPanel.pluginList = tempList;
 	}
 
 	private void updateConfig()
 	{
-		this.hidePlugins = config.hidePlugins();
+		this.pluginSortMode = config.pluginSortMode();
 		this.externalColor = config.externalColor();
 		this.pvmColor = config.pvmColor();
 		this.pvpColor = config.pvpColor();

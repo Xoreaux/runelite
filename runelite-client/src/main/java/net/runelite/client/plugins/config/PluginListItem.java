@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.config;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
@@ -44,6 +43,7 @@ import net.runelite.client.config.ConfigDescriptor;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.IconButton;
 import net.runelite.client.util.ImageUtil;
@@ -93,14 +93,17 @@ public class PluginListItem extends JPanel
 	@Getter
 	private boolean isPinned = false;
 
+	@Getter
+	private boolean isHidden = false;
+
 	static
 	{
 		BufferedImage configIcon = ImageUtil.getResourceStreamFromClass(ConfigPanel.class, "config_edit_icon.png");
 		BufferedImage onSwitcher = ImageUtil.getResourceStreamFromClass(ConfigPanel.class, "switcher_on.png");
 		BufferedImage onStar = ImageUtil.getResourceStreamFromClass(ConfigPanel.class, "star_on.png");
 		CONFIG_ICON = new ImageIcon(configIcon);
-		ON_SWITCHER = new ImageIcon(ImageUtil.recolorImage(onSwitcher, new Color(0, 106, 221)));
-		ON_STAR = new ImageIcon(ImageUtil.recolorImage(onStar, new Color(0, 106, 221)));
+		ON_SWITCHER = new ImageIcon(ImageUtil.recolorImage(onSwitcher, ColorScheme.BRAND_BLUE));
+		ON_STAR = new ImageIcon(ImageUtil.recolorImage(onStar, ColorScheme.BRAND_BLUE));
 		CONFIG_ICON_HOVER = new ImageIcon(ImageUtil.grayscaleOffset(configIcon, -100));
 		BufferedImage offSwitcherImage = ImageUtil.flipImage(
 			ImageUtil.grayscaleOffset(
@@ -200,11 +203,6 @@ public class PluginListItem extends JPanel
 		toggleButton.setPreferredSize(new Dimension(25, 0));
 		attachToggleButtonListener(toggleButton);
 
-		if (name.equals("OpenOSRS"))
-		{
-			toggleButton.setVisible(false);
-		}
-
 		buttonPanel.add(toggleButton);
 	}
 
@@ -253,6 +251,11 @@ public class PluginListItem extends JPanel
 		isPinned = pinned;
 		pinButton.setIcon(pinned ? ON_STAR : OFF_STAR);
 		pinButton.setToolTipText(pinned ? "Unpin plugin" : "Pin plugin");
+	}
+
+	public void setHidden(boolean hidden)
+	{
+		isHidden = hidden;
 	}
 
 	private void updateToggleButton(IconButton button)

@@ -25,8 +25,10 @@
  */
 package net.runelite.client.plugins.worldmap;
 
+import java.awt.image.BufferedImage;
 import lombok.Getter;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.util.ImageUtil;
 
 @Getter
 enum TeleportLocationData
@@ -149,6 +151,7 @@ enum TeleportLocationData
 	OBELISK_35(TeleportType.OTHER, "Obelisk", "35", new WorldPoint(3106, 3794, 0), "obelisk_icon.png"),
 	OBELISK_44(TeleportType.OTHER, "Obelisk", "44", new WorldPoint(2980, 3866, 0), "obelisk_icon.png"),
 	OBELISK_50(TeleportType.OTHER, "Obelisk", "50", new WorldPoint(3307, 3916, 0), "obelisk_icon.png"),
+	WILDERNESS_CRABS_TELEPORT(TeleportType.OTHER, "Wilderness crabs teleport", new WorldPoint(3348, 3783, 0), "wilderness_crabs_teleport_icon.png"),
 
 	// Achievement Diary
 	ARDOUGNE_CLOAK_MONASTERY(TeleportType.OTHER, "Ardougne Cloak", "Monastery", new WorldPoint(2606, 3222, 0), "ardougne_cloak_icon.png"),
@@ -187,6 +190,24 @@ enum TeleportLocationData
 	private final String tooltip;
 	private final WorldPoint location;
 	private final String iconPath;
+	private BufferedImage image;
+
+	BufferedImage getImage()
+	{
+		if (image == null)
+		{
+			try
+			{
+				image = ImageUtil.getResourceStreamFromClass(WorldMapPlugin.class, this.getIconPath());
+			}
+			catch (RuntimeException e)
+			{
+				return WorldMapPlugin.BLANK_ICON;
+			}
+		}
+
+		return image;
+	}
 
 	TeleportLocationData(TeleportType type, String destination, int magicLevel, WorldPoint location, String iconPath)
 	{

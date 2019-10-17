@@ -91,6 +91,7 @@ import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.plugins.PluginType;
 import net.runelite.client.plugins.menuentryswapper.comparables.BankComparableEntry;
 import net.runelite.client.plugins.menuentryswapper.comparables.EquipmentComparableEntry;
+import net.runelite.client.plugins.menuentryswapper.comparables.GrimyHerbComparableEntry;
 import net.runelite.client.plugins.menuentryswapper.comparables.InventoryComparableEntry;
 import net.runelite.client.plugins.menuentryswapper.comparables.ShopComparableEntry;
 import net.runelite.client.plugins.menuentryswapper.comparables.WithdrawComparableEntry;
@@ -117,6 +118,7 @@ import net.runelite.client.plugins.menuentryswapper.util.QuestCapeMode;
 import net.runelite.client.plugins.menuentryswapper.util.RingOfWealthMode;
 import net.runelite.client.plugins.menuentryswapper.util.SkillsNecklaceMode;
 import net.runelite.client.plugins.menuentryswapper.util.SlayerRingMode;
+import net.runelite.client.plugins.menuentryswapper.util.SwapGrimyHerbMode;
 import net.runelite.client.plugins.menuentryswapper.util.XericsTalismanMode;
 import net.runelite.client.plugins.pvptools.PvpToolsConfig;
 import net.runelite.client.plugins.pvptools.PvpToolsPlugin;
@@ -218,6 +220,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private OccultAltarMode swapOccultMode;
 	private QuestCapeMode questCapeMode;
 	private RingOfWealthMode getRingofWealthMode;
+	private SwapGrimyHerbMode swapGrimyHerbMode;
 	private Set<String> hideCastIgnoredCoX;
 	private Set<String> hideCastIgnoredToB;
 	private SkillsNecklaceMode getSkillsNecklaceMode;
@@ -242,6 +245,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 	private boolean getSwapExplorersRing;
 	private boolean getSwapMagicCape;
 	private boolean getSwapPuro;
+	private boolean getSwapGrimyHerb;
 	private boolean getSwapSawmill;
 	private boolean getSwapSawmillPlanks;
 	private boolean getSwapTanning;
@@ -608,7 +612,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		if (this.getSwapPuro && isPuroPuro())
 		{
-			if (event.getType() == WALK.getId())
+			if (event.getOpcode() == WALK.getId())
 			{
 				MenuEntry[] menuEntries = client.getMenuEntries();
 				MenuEntry menuEntry = menuEntries[menuEntries.length - 1];
@@ -627,7 +631,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 
 		if (hintArrowNpc != null
 			&& hintArrowNpc.getIndex() == eventId
-			&& NPC_MENU_TYPES.contains(MenuOpcode.of(event.getType())))
+			&& NPC_MENU_TYPES.contains(MenuOpcode.of(event.getOpcode())))
 		{
 			return;
 		}
@@ -644,26 +648,42 @@ public class MenuEntrySwapperPlugin extends Plugin
 				}
 			}
 			List<String> invItemNames = new ArrayList<>();
-			if (target.equals("gourmet impling jar"))
-			{
-				if (client.getItemContainer(InventoryID.INVENTORY) != null)
-				{
-					for (Item i : Objects.requireNonNull(client.getItemContainer(InventoryID.INVENTORY)).getItems())
-					{
-						invItemNames.add(client.getItemDefinition((i.getId())).getName());
-					}
-					if ((invItemNames.contains("Clue scroll (easy)") || bankItemNames.contains("Clue scroll (easy)")))
-					{
-						menuManager.addSwap("loot", target, "use");
-					}
-					else
-					{
-						menuManager.removeSwaps(target);
-					}
-				}
-			}
 			switch (target)
 			{
+				case "gourmet impling jar":
+					if (client.getItemContainer(InventoryID.INVENTORY) != null)
+					{
+						for (Item i : Objects.requireNonNull(client.getItemContainer(InventoryID.INVENTORY)).getItems())
+						{
+							invItemNames.add(client.getItemDefinition((i.getId())).getName());
+						}
+						if ((invItemNames.contains("Clue scroll (easy)") || bankItemNames.contains("Clue scroll (easy)")))
+						{
+							menuManager.addSwap("loot", target, "use");
+						}
+						else
+						{
+							menuManager.removeSwaps(target);
+						}
+					}
+					break;
+				case "young impling jar":
+					if (client.getItemContainer(InventoryID.INVENTORY) != null)
+					{
+						for (Item i : Objects.requireNonNull(client.getItemContainer(InventoryID.INVENTORY)).getItems())
+						{
+							invItemNames.add(client.getItemDefinition((i.getId())).getName());
+						}
+						if (invItemNames.contains("Clue scroll (easy)") || bankItemNames.contains("Clue scroll (easy)") || invItemNames.contains("Clue scroll (beginner)") || bankItemNames.contains("Clue scroll (beginner)"))
+						{
+							menuManager.addSwap("loot", target, "use");
+						}
+						else
+						{
+							menuManager.removeSwaps(target);
+						}
+					}
+					break;
 				case "eclectic impling jar":
 					if (client.getItemContainer(InventoryID.INVENTORY) != null)
 					{
@@ -722,17 +742,17 @@ public class MenuEntrySwapperPlugin extends Plugin
 		}
 	}
 
-	private void onMenuOptionClicked(MenuOptionClicked event)
+	private void onMenuOptionClicked(MenuOptionClicked entry)
 	{
-		if (event.getOpcode() == MenuOpcode.WIDGET_DEFAULT.getId() &&
-			WidgetInfo.TO_GROUP(event.getActionParam1()) == WidgetID.JEWELLERY_BOX_GROUP_ID)
+		if (entry.getOpcode() == MenuOpcode.WIDGET_DEFAULT.getId() &&
+			WidgetInfo.TO_GROUP(entry.getParam1()) == WidgetID.JEWELLERY_BOX_GROUP_ID)
 		{
-			if (event.getOption().equals(lastDes == null ? null : lastDes.getOption()))
+			if (entry.getOption().equals(lastDes == null ? null : lastDes.getOption()))
 			{
 				return;
 			}
 
-			JewelleryBoxDestination newDest = JewelleryBoxDestination.withOption(event.getOption());
+			JewelleryBoxDestination newDest = JewelleryBoxDestination.withOption(entry.getOption());
 			if (newDest == null)
 			{
 				return;
@@ -741,17 +761,16 @@ public class MenuEntrySwapperPlugin extends Plugin
 			lastDes = newDest;
 			config.lastDes(lastDes.getOption());
 		}
-		else if (event.getOption().equals("Teleport") && event.getTarget().contains("Jewellery Box"))
+		else if (entry.getOption().equals("Teleport") && entry.getTarget().contains("Jewellery Box"))
 		{
-			eventBus.unregister("wait for widget");
+			eventBus.unregister(JEWEL_WIDGET);
 		}
 		else if (lastDes != null &&
-			event.getOpcode() == MenuOpcode.PRIO_RUNELITE.getId() &&
-			event.getOption().equals(lastDes.getOption()))
+			entry.getOpcode() == MenuOpcode.PRIO_RUNELITE.getId() &&
+			entry.getOption().equals(lastDes.getOption()))
 		{
-			MenuEntry e = event.getMenuEntry();
-			e.setOption("Teleport");
-			e.setOpcode(MenuOpcode.GAME_OBJECT_FIRST_OPTION.getId());
+			entry.setOption("Teleport");
+			entry.setOpcode(MenuOpcode.GAME_OBJECT_FIRST_OPTION.getId());
 
 			eventBus.subscribe(ScriptCallbackEvent.class, JEWEL_WIDGET, this::onScriptCallback);
 		}
@@ -1281,6 +1300,11 @@ public class MenuEntrySwapperPlugin extends Plugin
 		{
 			menuManager.addPriorityEntry(this.swapHouseAdMode.getEntry());
 		}
+
+		if (this.getSwapGrimyHerb)
+		{
+			menuManager.addPriorityEntry(new GrimyHerbComparableEntry(this.swapGrimyHerbMode, client));
+		}
 	}
 
 	private void removeSwaps()
@@ -1393,6 +1417,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		menuManager.removePriorityEntry(new EquipmentComparableEntry(this.getXericsTalismanMode.toString(), "talisman"));
 		menuManager.removePriorityEntry(new InventoryComparableEntry("Rub", "", false));
 		menuManager.removePriorityEntry(new InventoryComparableEntry("Teleport", "", false));
+		menuManager.removePriorityEntry(new GrimyHerbComparableEntry(this.swapGrimyHerbMode, client));
 		menuManager.removePriorityEntry(newBankComparableEntry("Empty", "Coal bag"));
 		menuManager.removePriorityEntry(this.constructionCapeMode.toString(), "Construct. cape");
 		menuManager.removePriorityEntry(this.constructionCapeMode.toString(), "Construct. cape(t)");
@@ -1686,6 +1711,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		this.getNecklaceofPassageMode = config.getNecklaceofPassageMode();
 		this.getRingofWealth = config.getRingofWealth();
 		this.getRingofWealthMode = config.getRingofWealthMode();
+		this.swapGrimyHerbMode = config.swapGrimyHerbMode();
 		this.getSkillsNecklace = config.getSkillsNecklace();
 		this.getSkillsNecklaceMode = config.getSkillsNecklaceMode();
 		this.getSlayerRing = config.getSlayerRing();
@@ -1696,6 +1722,7 @@ public class MenuEntrySwapperPlugin extends Plugin
 		this.getSwapExplorersRing = config.getSwapExplorersRing();
 		this.getSwapMagicCape = config.getSwapMagicCape();
 		this.getSwapPuro = config.getSwapPuro();
+		this.getSwapGrimyHerb = config.getSwapGrimyHerb();
 		this.getSwapSawmill = config.getSwapSawmill();
 		this.getSwapSawmillPlanks = config.getSwapSawmillPlanks();
 		this.getSwapTanning = config.getSwapTanning();

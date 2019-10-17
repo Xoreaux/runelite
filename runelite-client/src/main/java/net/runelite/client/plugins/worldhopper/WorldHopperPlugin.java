@@ -43,7 +43,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.swing.SwingUtilities;
@@ -84,6 +83,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ExecutorServiceExceptionLogger;
 import net.runelite.client.util.HotkeyListener;
 import net.runelite.api.util.Text;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.WorldUtil;
 import net.runelite.client.util.ping.Ping;
 import net.runelite.http.api.worlds.World;
@@ -215,11 +215,7 @@ public class WorldHopperPlugin extends Plugin
 
 		panel = new WorldSwitcherPanel(this);
 
-		final BufferedImage icon;
-		synchronized (ImageIO.class)
-		{
-			icon = ImageIO.read(getClass().getResourceAsStream("icon.png"));
-		}
+		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(WorldHopperPlugin.class, "icon.png");
 
 		navButton = NavigationButton.builder()
 			.tooltip("World Switcher")
@@ -390,7 +386,7 @@ public class WorldHopperPlugin extends Plugin
 			return;
 		}
 
-		int groupId = WidgetInfo.TO_GROUP(event.getActionParam1());
+		int groupId = WidgetInfo.TO_GROUP(event.getParam1());
 		String option = event.getOption();
 
 		if (groupId == WidgetInfo.FRIENDS_LIST.getGroupId() || groupId == WidgetInfo.CLAN_CHAT.getGroupId())
@@ -433,8 +429,8 @@ public class WorldHopperPlugin extends Plugin
 			hopTo.setOption(HOP_TO);
 			hopTo.setTarget(event.getTarget());
 			hopTo.setOpcode(MenuOpcode.RUNELITE.getId());
-			hopTo.setParam0(event.getActionParam0());
-			hopTo.setParam1(event.getActionParam1());
+			hopTo.setParam0(event.getParam0());
+			hopTo.setParam1(event.getParam1());
 
 			insertMenuEntry(hopTo, client.getMenuEntries(), after);
 		}

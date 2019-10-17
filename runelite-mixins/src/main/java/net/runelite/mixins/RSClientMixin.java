@@ -201,11 +201,7 @@ public abstract class RSClientMixin implements RSClient
 	private static boolean printMenuActions;
 
 	@Inject
-	@Override
-	public void setPrintMenuActions(boolean yes)
-	{
-		printMenuActions = yes;
-	}
+	private static boolean hideDisconnect = false;
 
 	@Inject
 	private static boolean hideFriendAttackOptions = false;
@@ -221,6 +217,20 @@ public abstract class RSClientMixin implements RSClient
 
 	@Inject
 	private static Set<String> unhiddenCasts = new HashSet<String>();
+
+	@Inject
+	@Override
+	public void setPrintMenuActions(boolean yes)
+	{
+		printMenuActions = yes;
+	}
+
+	@Inject
+	@Override
+	public void setHideDisconnect(boolean dontShow)
+	{
+		hideDisconnect = dontShow;
+	}
 
 	@Inject
 	@Override
@@ -729,27 +739,25 @@ public abstract class RSClientMixin implements RSClient
 		if (newCount == oldCount + 1)
 		{
 			MenuEntryAdded event = new MenuEntryAdded(
-				new MenuEntry(
-					options[oldCount],
-					targets[oldCount],
-					identifiers[oldCount],
-					opcodes[oldCount],
-					arguments1[oldCount],
-					arguments2[oldCount],
-					forceLeftClick[oldCount]
-				)
+				options[oldCount],
+				targets[oldCount],
+				identifiers[oldCount],
+				opcodes[oldCount],
+				arguments1[oldCount],
+				arguments2[oldCount],
+				forceLeftClick[oldCount]
 			);
 
 			client.getCallbacks().post(MenuEntryAdded.class, event);
 
-			if (event.isWasModified() && client.getMenuOptionCount() == newCount)
+			if (event.hasBeenModified() && client.getMenuOptionCount() == newCount)
 			{
 				options[oldCount] = event.getOption();
 				targets[oldCount] = event.getTarget();
 				identifiers[oldCount] = event.getIdentifier();
-				opcodes[oldCount] = event.getType();
-				arguments1[oldCount] = event.getActionParam0();
-				arguments2[oldCount] = event.getActionParam1();
+				opcodes[oldCount] = event.getOpcode();
+				arguments1[oldCount] = event.getParam0();
+				arguments2[oldCount] = event.getParam1();
 				forceLeftClick[oldCount] = event.isForceLeftClick();
 			}
 		}
@@ -1346,15 +1354,13 @@ public abstract class RSClientMixin implements RSClient
 		}
 
 		final MenuOptionClicked menuOptionClicked = new MenuOptionClicked(
-			new MenuEntry(
-				menuOption,
-				menuTarget,
-				id,
-				menuAction,
-				actionParam,
-				widgetId,
-				false
-			),
+			menuOption,
+			menuTarget,
+			id,
+			menuAction,
+			actionParam,
+			widgetId,
+			false,
 			authentic,
 			client.getMouseCurrentButton()
 		);
@@ -1366,7 +1372,7 @@ public abstract class RSClientMixin implements RSClient
 			return;
 		}
 
-		rs$menuAction(menuOptionClicked.getActionParam0(), menuOptionClicked.getActionParam1(), menuOptionClicked.getOpcode(),
+		rs$menuAction(menuOptionClicked.getParam0(), menuOptionClicked.getParam1(), menuOptionClicked.getOpcode(),
 			menuOptionClicked.getIdentifier(), menuOptionClicked.getOption(), menuOptionClicked.getTarget(), var6, var7);
 	}
 
@@ -1760,5 +1766,21 @@ public abstract class RSClientMixin implements RSClient
 	public void setModulus(BigInteger modulus)
 	{
 		this.modulus = modulus;
+	}
+
+	@Copy("forceDisconnect")
+	static void rs$forceDisconnect(int reason)
+	{
+	}
+
+	@Replace("forceDisconnect")
+	static void forceDisconnect(int reason)
+	{
+		rs$forceDisconnect(reason);
+
+		if (hideDisconnect && reason == 1)
+		{
+			client.promptCredentials(true);
+		}
 	}
 }
