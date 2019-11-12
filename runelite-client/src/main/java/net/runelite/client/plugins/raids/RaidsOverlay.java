@@ -33,7 +33,6 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,8 +40,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.Client;
+import static net.runelite.api.MenuOpcode.RUNELITE_OVERLAY;
 import static net.runelite.api.MenuOpcode.RUNELITE_OVERLAY_CONFIG;
 import net.runelite.api.SpriteID;
+import net.runelite.api.util.Text;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -61,7 +62,6 @@ import net.runelite.client.ui.overlay.components.table.TableAlignment;
 import net.runelite.client.ui.overlay.components.table.TableComponent;
 import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.api.util.Text;
 
 @Singleton
 public class RaidsOverlay extends Overlay
@@ -72,6 +72,7 @@ public class RaidsOverlay extends Overlay
 	private static final int SMALL_ICON_SIZE = 21;
 	private static final int TITLE_COMPONENT_HEIGHT = 20;
 	private static final int LINE_COMPONENT_HEIGHT = 16;
+	static final String BROADCAST_ACTION = "Broadcast layout";
 	private final PanelComponent panelComponent = new PanelComponent();
 	private final ItemManager itemManager;
 	private final SpriteManager spriteManager;
@@ -101,6 +102,7 @@ public class RaidsOverlay extends Overlay
 		this.itemManager = itemManager;
 		this.spriteManager = spriteManager;
 		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY_CONFIG, OPTION_CONFIGURE, "Raids overlay"));
+		getMenuEntries().add(new OverlayMenuEntry(RUNELITE_OVERLAY, BROADCAST_ACTION, "Raids overlay"));
 	}
 
 	@Override
@@ -162,7 +164,6 @@ public class RaidsOverlay extends Overlay
 		boolean vanguards = false;
 		boolean unknownCombat = false;
 		String puzzles = "";
-		String roomName;
 		for (Room layoutRoom : plugin.getRaid().getLayout().getRooms())
 		{
 			int position = layoutRoom.getPosition();
@@ -177,36 +178,20 @@ public class RaidsOverlay extends Overlay
 			{
 				case COMBAT:
 					combatCount++;
-					roomName = room.getBoss().getName();
-					switch (Objects.requireNonNull(RaidRoom.Boss.fromString(roomName)))
-					{
-						case VANGUARDS:
-							vanguards = true;
-							break;
-						case UNKNOWN:
-							unknownCombat = true;
-							break;
-					}
+
+					vanguards = room == RaidRoom.VANGUARDS;
+					unknownCombat = room == RaidRoom.UNKNOWN_COMBAT;
 					break;
 				case PUZZLE:
-					roomName = room.getPuzzle().getName();
-					switch (Objects.requireNonNull(RaidRoom.Puzzle.fromString(roomName)))
+					crabs = room == RaidRoom.CRABS;
+					iceDemon = room == RaidRoom.ICE_DEMON;
+					thieving = room == RaidRoom.THIEVING;
+					tightrope = room == RaidRoom.TIGHTROPE;
+
+					if (iceDemon)
 					{
-						case CRABS:
-							crabs = true;
-							break;
-						case ICE_DEMON:
-							iceDemon = true;
-							iceRooms.add(roomCount);
-							break;
-						case THIEVING:
-							thieving = true;
-							break;
-						case TIGHTROPE:
-							tightrope = true;
-							break;
+						iceRooms.add(roomCount);
 					}
-					break;
 				case SCAVENGERS:
 					scavRooms.add(roomCount);
 					break;
@@ -313,17 +298,17 @@ public class RaidsOverlay extends Overlay
 			{
 				case COMBAT:
 					bossCount++;
-					if (plugin.getRoomWhitelist().contains(room.getBoss().getName().toLowerCase()))
+					if (plugin.getRoomWhitelist().contains(room.getName().toLowerCase()))
 					{
 						color = Color.GREEN;
 					}
-					else if (plugin.getRoomBlacklist().contains(room.getBoss().getName().toLowerCase())
+					else if (plugin.getRoomBlacklist().contains(room.getName().toLowerCase())
 						|| plugin.isEnableRotationWhitelist() && bossCount > bossMatches)
 					{
 						color = Color.RED;
 					}
 
-					String bossName = room.getBoss().getName();
+					String bossName = room.getName();
 					String bossNameLC = bossName.toLowerCase();
 					if (plugin.isShowRecommendedItems() && plugin.getRecommendedItemsList().get(bossNameLC) != null)
 					{
@@ -335,7 +320,7 @@ public class RaidsOverlay extends Overlay
 					break;
 
 				case PUZZLE:
-					String puzzleName = room.getPuzzle().getName();
+					String puzzleName = room.getName();
 					String puzzleNameLC = puzzleName.toLowerCase();
 					if (plugin.getRecommendedItemsList().get(puzzleNameLC) != null)
 					{
