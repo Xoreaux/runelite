@@ -29,7 +29,7 @@ import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
-import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.WorldLocation;
 import net.runelite.client.input.KeyManager;
@@ -50,7 +50,6 @@ import net.runelite.client.util.HotkeyListener;
 @Singleton
 public class WildernessLocationsPlugin extends Plugin
 {
-
 	@Inject
 	private Client client;
 
@@ -60,10 +59,10 @@ public class WildernessLocationsPlugin extends Plugin
 	@Inject
 	private WildernessLocationsOverlay overlay = new WildernessLocationsOverlay(this);
 
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private boolean renderLocation;
 
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private String locationString = "";
 
 	@Inject
@@ -74,9 +73,6 @@ public class WildernessLocationsPlugin extends Plugin
 
 	@Inject
 	private KeyManager keyManager;
-
-	@Inject
-	private EventBus eventBus;
 
 	@Inject
 	private WildernessLocationsMapOverlay wildernessLocationsMapOverlay;
@@ -98,13 +94,13 @@ public class WildernessLocationsPlugin extends Plugin
 	private boolean drawOverlay;
 	private boolean pvpWorld;
 	private Keybind keybind;
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private boolean worldMapNames;
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private Color mapOverlayColor;
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private boolean outlineLocations;
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private boolean worldMapOverlay;
 
 
@@ -115,9 +111,8 @@ public class WildernessLocationsPlugin extends Plugin
 	}
 
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
-		addSubscriptions();
 
 		updateConfig();
 
@@ -137,13 +132,7 @@ public class WildernessLocationsPlugin extends Plugin
 		this.worldMapOverlay = this.worldMapNames || this.outlineLocations;
 	}
 
-	private void addSubscriptions()
-	{
-		eventBus.subscribe(ConfigChanged.class, this, this::onConfigChanged);
-		eventBus.subscribe(GameTick.class, this, this::onGameTick);
-		eventBus.subscribe(VarClientStrChanged.class, this, this::onVarClientStrChanged);
-	}
-
+	@Subscribe
 	private void onConfigChanged(ConfigChanged event)
 	{
 		if (!event.getGroup().equals("wildernesslocations"))
@@ -155,15 +144,14 @@ public class WildernessLocationsPlugin extends Plugin
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
-		eventBus.unregister(this);
-
 		overlayManager.remove(overlay);
 		overlayManager.remove(wildernessLocationsMapOverlay);
 		keyManager.unregisterKeyListener(hotkeyListener);
 	}
 
+	@Subscribe
 	private void onGameTick(GameTick event)
 	{
 		if (currentCooldown != 0)
@@ -189,6 +177,7 @@ public class WildernessLocationsPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
 	private void onVarClientStrChanged(VarClientStrChanged varClient)
 	{
 		String newChat = client.getVar(VarClientStr.CHATBOX_TYPED_TEXT);

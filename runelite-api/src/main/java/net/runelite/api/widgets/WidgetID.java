@@ -161,6 +161,7 @@ public class WidgetID
 	public static final int LMS_INGAME_GROUP_ID = 328;
 	public static final int JEWELLERY_BOX_GROUP_ID = 590;
 	public static final int OPTIONS_GROUP_ID = 261;
+	public static final int THEATRE_OF_BLOOD_PARTY_GROUP_ID = 28;
 	public static final int GWD_KC_GROUP_ID = 406;
 
 	static class WorldMap
@@ -687,6 +688,11 @@ public class WidgetID
 		static final int BOSS_HEALTH_BAR = 35;
 	}
 
+	static class TheatreOfBloodParty
+	{
+		static final int CONTAINER = 10;
+	}
+
 	static class ExperienceDrop
 	{
 		static final int DROP_1 = 15;
@@ -830,13 +836,7 @@ public class WidgetID
 
 	static class SpellBook
 	{
-		static final int FILTERED_SPELLS_PARENT = 1;
 		static final int FILTERED_SPELLS_BOUNDS = 3;
-
-		static final int FILTER_SECTION_PARENT = 182;
-		static final int FILTER_BUTTONS_PARENT = 185;
-		static final int FILTER_BUTTON_PARENT = 186;
-		static final int FILTER_BUTTON = 188;
 		static final int TOOLTIP = 189;
 
 		// NORMAL SPELLS
@@ -992,6 +992,7 @@ public class WidgetID
 	static class StandardSpellBook
 	{
 		static final int LUMBRIDGE_HOME_TELEPORT = 5;
+		static final int KOUREND_HOME_TELEPORT = 4;
 	}
 
 	static class AncientSpellBook

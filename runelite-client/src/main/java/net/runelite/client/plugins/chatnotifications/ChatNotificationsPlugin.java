@@ -47,7 +47,7 @@ import net.runelite.client.RuneLiteProperties;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -61,6 +61,9 @@ import net.runelite.client.plugins.PluginDescriptor;
 @Singleton
 public class ChatNotificationsPlugin extends Plugin
 {
+	// Private message cache used to avoid duplicate notifications from ChatHistory.
+	private final Set<Integer> privateMessageHashes = new HashSet<>();
+
 	@Inject
 	private Client client;
 
@@ -73,17 +76,10 @@ public class ChatNotificationsPlugin extends Plugin
 	@Inject
 	private Notifier notifier;
 
-	@Inject
-	private EventBus eventBus;
-
 	//Custom Highlights
 	private Pattern usernameMatcher = null;
 	private String usernameReplacer = "";
 	private Pattern highlightMatcher = null;
-
-	// Private message cache used to avoid duplicate notifications from ChatHistory.
-	private final Set<Integer> privateMessageHashes = new HashSet<>();
-
 	private boolean highlightOwnName;
 	private String highlightWordsString;
 	private boolean notifyOnOwnName;
@@ -91,6 +87,49 @@ public class ChatNotificationsPlugin extends Plugin
 	private boolean notifyOnTrade;
 	private boolean notifyOnDuel;
 	private boolean notifyOnPm;
+
+	/**
+	 * Get the last color tag from a string, or null if there was none
+	 *
+	 * @param str
+	 * @return
+	 */
+	private static String getLastColor(String str)
+	{
+		int colIdx = str.lastIndexOf("<col=");
+		int colEndIdx = str.lastIndexOf("</col>");
+
+		if (colEndIdx > colIdx)
+		{
+			// ends in a </col> which resets the color to normal
+			return "<col" + ChatColorType.NORMAL + ">";
+		}
+
+		if (colIdx == -1)
+		{
+			return null; // no color
+		}
+
+		int closeIdx = str.indexOf('>', colIdx);
+		if (closeIdx == -1)
+		{
+			return null; // unclosed col tag
+		}
+
+		return str.substring(colIdx, closeIdx + 1); // include the >
+	}
+
+	/**
+	 * Strip color tags from a string.
+	 *
+	 * @param str
+	 * @return
+	 */
+	@VisibleForTesting
+	static String stripColor(String str)
+	{
+		return str.replaceAll("(<col=[0-9a-f]+>|</col>)", "");
+	}
 
 	@Provides
 	ChatNotificationsConfig provideConfig(ConfigManager configManager)
@@ -102,7 +141,6 @@ public class ChatNotificationsPlugin extends Plugin
 	public void startUp()
 	{
 		updateConfig();
-		addSubscriptions();
 
 		updateHighlights();
 	}
@@ -110,18 +148,10 @@ public class ChatNotificationsPlugin extends Plugin
 	@Override
 	public void shutDown()
 	{
-		eventBus.unregister(this);
-
 		this.privateMessageHashes.clear();
 	}
 
-	private void addSubscriptions()
-	{
-		eventBus.subscribe(ConfigChanged.class, this, this::onConfigChanged);
-		eventBus.subscribe(GameStateChanged.class, this, this::onGameStateChanged);
-		eventBus.subscribe(ChatMessage.class, this, this::onChatMessage);
-	}
-
+	@Subscribe
 	private void onGameStateChanged(GameStateChanged event)
 	{
 		switch (event.getGameState())
@@ -133,6 +163,7 @@ public class ChatNotificationsPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
 	private void onConfigChanged(ConfigChanged event)
 	{
 		if (event.getGroup().equals("chatnotification"))
@@ -159,6 +190,7 @@ public class ChatNotificationsPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
 	void onChatMessage(ChatMessage chatMessage)
 	{
 		MessageNode messageNode = chatMessage.getMessageNode();
@@ -324,48 +356,5 @@ public class ChatNotificationsPlugin extends Plugin
 		}
 
 		return stringBuilder.toString();
-	}
-
-	/**
-	 * Get the last color tag from a string, or null if there was none
-	 *
-	 * @param str
-	 * @return
-	 */
-	private static String getLastColor(String str)
-	{
-		int colIdx = str.lastIndexOf("<col=");
-		int colEndIdx = str.lastIndexOf("</col>");
-
-		if (colEndIdx > colIdx)
-		{
-			// ends in a </col> which resets the color to normal
-			return "<col" + ChatColorType.NORMAL + ">";
-		}
-
-		if (colIdx == -1)
-		{
-			return null; // no color
-		}
-
-		int closeIdx = str.indexOf('>', colIdx);
-		if (closeIdx == -1)
-		{
-			return null; // unclosed col tag
-		}
-
-		return str.substring(colIdx, closeIdx + 1); // include the >
-	}
-
-	/**
-	 * Strip color tags from a string.
-	 *
-	 * @param str
-	 * @return
-	 */
-	@VisibleForTesting
-	static String stripColor(String str)
-	{
-		return str.replaceAll("(<col=[0-9a-f]+>|</col>)", "");
 	}
 }

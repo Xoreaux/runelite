@@ -139,6 +139,7 @@ public class Hooks implements Callbacks
 	/**
 	 * Get the Graphics2D for the MainBufferProvider image
 	 * This caches the Graphics2D instance so it can be reused
+	 *
 	 * @param mainBufferProvider
 	 * @return
 	 */
@@ -159,13 +160,13 @@ public class Hooks implements Callbacks
 	}
 
 	@Override
-	public <T> void post(Class<T> eventClass, Event event)
+	public <T extends Event, E extends T> void post(Class<T> eventClass, E event)
 	{
 		eventBus.post(eventClass, event);
 	}
 
 	@Override
-	public <T> void postDeferred(Class<T> eventClass, Event event)
+	public <T extends Event, E extends T> void postDeferred(Class<T> eventClass, E event)
 	{
 		deferredEventBus.post(eventClass, event);
 	}

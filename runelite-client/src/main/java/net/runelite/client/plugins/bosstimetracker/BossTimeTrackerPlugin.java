@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import lombok.AccessLevel;
 import lombok.Getter;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -39,7 +40,7 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.util.Text;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -76,10 +77,7 @@ public class BossTimeTrackerPlugin extends Plugin
 	@Inject
 	private ConfigManager configManager;
 
-	@Inject
-	private EventBus eventBus;
-
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private BossTimeTracker timer;
 
 	private Instant startTime;
@@ -87,12 +85,7 @@ public class BossTimeTrackerPlugin extends Plugin
 	private Boolean started = false;
 	private boolean loggingIn;
 
-	@Override
-	public void startUp()
-	{
-		addSubscriptions();
-	}
-
+	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		switch (event.getGameState())
@@ -125,6 +118,7 @@ public class BossTimeTrackerPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
 		if (event.getType() != ChatMessageType.GAMEMESSAGE && event.getType() != ChatMessageType.SPAM)
@@ -240,18 +234,11 @@ public class BossTimeTrackerPlugin extends Plugin
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
-		eventBus.unregister(this);
 		removeTimer();
 		resetConfig();
 		resetVars();
-	}
-
-	private void addSubscriptions()
-	{
-		eventBus.subscribe(GameStateChanged.class, this, this::onGameStateChanged);
-		eventBus.subscribe(ChatMessage.class, this, this::onChatMessage);
 	}
 
 	private void loadConfig()

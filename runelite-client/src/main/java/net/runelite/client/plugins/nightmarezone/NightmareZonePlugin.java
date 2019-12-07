@@ -43,7 +43,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.eventbus.EventBus;
+import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -75,10 +75,7 @@ public class NightmareZonePlugin extends Plugin
 	@Inject
 	private NightmareZoneOverlay overlay;
 
-	@Inject
-	private EventBus eventBus;
-
-	@Getter
+	@Getter(AccessLevel.PACKAGE)
 	private int pointsPerHour;
 
 	private Instant nmzSessionStartTime;
@@ -105,20 +102,17 @@ public class NightmareZonePlugin extends Plugin
 	private Color absorptionColorBelowThreshold;
 
 	@Override
-	protected void startUp() throws Exception
+	protected void startUp()
 	{
 		updateConfig();
-		addSubscriptions();
 
 		overlayManager.add(overlay);
 		overlay.removeAbsorptionCounter();
 	}
 
 	@Override
-	protected void shutDown() throws Exception
+	protected void shutDown()
 	{
-		eventBus.unregister(this);
-
 		overlayManager.remove(overlay);
 		overlay.removeAbsorptionCounter();
 
@@ -132,13 +126,7 @@ public class NightmareZonePlugin extends Plugin
 		resetPointsPerHour();
 	}
 
-	private void addSubscriptions()
-	{
-		eventBus.subscribe(ConfigChanged.class, this, this::onConfigChanged);
-		eventBus.subscribe(GameTick.class, this, this::onGameTick);
-		eventBus.subscribe(ChatMessage.class, this, this::onChatMessage);
-	}
-
+	@Subscribe
 	private void onConfigChanged(ConfigChanged event)
 	{
 		if (!event.getGroup().equals("nightmareZone"))
@@ -156,6 +144,7 @@ public class NightmareZonePlugin extends Plugin
 		return configManager.getConfig(NightmareZoneConfig.class);
 	}
 
+	@Subscribe
 	private void onGameTick(GameTick event)
 	{
 		if (isNotInNightmareZone())
@@ -184,6 +173,7 @@ public class NightmareZonePlugin extends Plugin
 		}
 	}
 
+	@Subscribe
 	private void onChatMessage(ChatMessage event)
 	{
 		if (event.getType() != ChatMessageType.GAMEMESSAGE

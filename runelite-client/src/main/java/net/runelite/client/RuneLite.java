@@ -62,6 +62,7 @@ import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.game.ClanManager;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.LootManager;
+import net.runelite.client.game.PlayerManager;
 import net.runelite.client.game.XpDropManager;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.graphics.ModelOutlineRenderer;
@@ -159,6 +160,9 @@ public class RuneLite
 	private Provider<XpDropManager> xpDropManager;
 
 	@Inject
+	private Provider<PlayerManager> playerManager;
+
+	@Inject
 	private Provider<ChatboxPanelManager> chatboxPanelManager;
 
 	@Inject
@@ -238,7 +242,7 @@ public class RuneLite
 
 				Authenticator.setDefault(new Authenticator()
 				{
-					private PasswordAuthentication auth = new PasswordAuthentication(user, pass);
+					private final PasswordAuthentication auth = new PasswordAuthentication(user, pass);
 
 					protected PasswordAuthentication getPasswordAuthentication()
 					{
@@ -290,8 +294,6 @@ public class RuneLite
 			RuneLiteSplashScreen.setError("Error while loading!", "Please check your internet connection and your DNS settings.");
 		});
 
-		RuneLiteSplashScreen.stage(0, "Starting OpenOSRS injector");
-
 		PROFILES_DIR.mkdirs();
 
 		final long start = System.currentTimeMillis();
@@ -308,7 +310,7 @@ public class RuneLite
 		log.info("Client initialization took {}ms. Uptime: {}ms", end - start, uptime);
 	}
 
-	public void start() throws Exception
+	private void start() throws Exception
 	{
 		// Load RuneLite or Vanilla client
 		final boolean isOutdated = client == null;
@@ -366,6 +368,7 @@ public class RuneLite
 			commandManager.get();
 			lootManager.get();
 			xpDropManager.get();
+			playerManager.get();
 			chatboxPanelManager.get();
 
 			eventBus.subscribe(GameStateChanged.class, this, hooks::onGameStateChanged);
